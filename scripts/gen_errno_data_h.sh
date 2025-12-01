@@ -12,7 +12,7 @@ echo '#include <errno.h>' > "${TESTPROG}"
 $CC -E -dD "${TESTPROG}" | awk '/^#define E/ { printf "  {\"%s\", %s},\n", $2, $2 }' >> "${OUTPUT}"
 
 cat << 'EOF' >> "${OUTPUT}"
-    { NULL, -1 }
+  { NULL, -1 }
 };
 EOF
 

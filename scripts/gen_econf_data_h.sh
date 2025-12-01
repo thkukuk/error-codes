@@ -12,7 +12,7 @@ echo '#include <libeconf.h>' > "${TESTPROG}"
 $CC -E -dD  "${TESTPROG}" | awk '/ECONF_/ { printf "  {\"%s\", %s},\n", $1, $1 }' >> "${OUTPUT}"
 
 cat << 'EOF' >> "${OUTPUT}"
-    { NULL, -1 }
+  { NULL, -1 }
 };
 EOF
 
