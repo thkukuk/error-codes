@@ -1,0 +1,222 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
+#include "config.h"
+
+#include <ctype.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <locale.h>
+#include <getopt.h>
+
+struct entry {
+  const char *name;
+  int code;
+};
+
+#include <errno.h>
+#include "errno_data.h"
+
+#include <libeconf.h>
+#include "econf_data.h"
+
+#include <security/_pam_types.h>
+#include "pam_data.h"
+
+#include "basics.h"
+
+static void
+print_usage(FILE *stream)
+{
+  fputs("Usage: error-codes <command> [options] | [--help] | [--version]\n", stream);
+}
+
+static void
+print_help(void)
+{
+  fputs("error-codes - lookup error codes and descriptions.\n\n", stdout);
+  print_usage(stdout);
+
+  fputs("Commands: econf, errno, pam\n\n", stdout);
+
+  fputs("Options for econf, errno and pam:\n", stdout);
+  fputs("  <name-or-code>            Print information about error name or code\n", stdout);
+  fputs("  -l, --list                List all error names, values and descriptions\n", stdout);
+  fputs("  -s, --search <keyword...> Search keywords in description\n", stdout);
+  fputs("\n", stdout);
+  fputs("Generic options:\n", stdout);
+  fputs("  -h, --help                Give this help list\n", stdout);
+  fputs("  -v, --version             Print program version\n", stdout);
+}
+
+static void
+print_error(void)
+{
+  fputs("Try `error-codes --help' for more information.\n", stderr);
+}
+
+static const char *
+generic_strerror(int mode, int code)
+{
+  switch (mode)
+    {
+    case 0:
+      return econf_errString((econf_err)code);
+      break;
+    case 1:
+      return strerror(code);
+      break;
+    case 2:
+      return pam_strerror(NULL, code);
+      break;
+    default:
+      fprintf(stderr, "Unknown mode: %i\n", mode);
+      print_error();
+      exit(EINVAL);
+    }
+}
+
+static void
+print_entry(int mode, const struct entry *e)
+{
+  printf("%s - %i - %s\n", e->name, e->code,
+	 generic_strerror(mode, e->code));
+}
+
+static const struct entry *
+entry_from_name(const struct entry *list, const char *name)
+{
+  for (size_t i = 0; list[i].name != NULL; ++i)
+    if (strcaseeq(list[i].name, name))
+      return &list[i];
+
+  return NULL;
+}
+
+static const struct entry *
+entry_from_code(const struct entry *list, int code)
+{
+  for (size_t i = 0; list[i].name != NULL; ++i)
+    if (list[i].code == code)
+      return &list[i];
+
+  return NULL;
+}
+
+int
+main(int argc, char **argv)
+{
+  const struct entry *list = NULL;
+  int lflg = 0;
+  int mode = -1; /* 0 = econf, 1 = errno, 2 = pam, XXX make enum out of it */
+
+  setlocale(LC_ALL, "");
+
+  if (argc <= 1)
+    {
+      print_usage(stderr);
+      exit(EINVAL);
+    }
+
+  if (streq(argv[1], "econf"))
+    {
+      mode = 0;
+      list = econf_data;
+    }
+  else if (streq(argv[1], "errno"))
+    {
+      mode = 1;
+      list = errno_data;
+    }
+  else if (streq(argv[1], "pam"))
+    {
+      mode = 2;
+      list = pam_data;
+    }
+  else if (argv[1][0] != '-')
+    {
+      print_usage(stderr);
+      exit(EINVAL);
+    }
+
+  if (mode >= 0)
+    {
+      --argc;
+      ++argv;
+    }
+
+  while (1)
+    {
+      int c;
+      int option_index = 0;
+      static struct option long_options[] =
+        {
+	  {"list",    no_argument,       NULL, 'l' },
+	  {"search",  required_argument, NULL, 's' },
+          {"help",    no_argument,       NULL, 'h' },
+          {"version", no_argument,       NULL, 'v' },
+          {NULL,      0,                 NULL, '\0'}
+        };
+
+      c = getopt_long (argc, argv, "ls:hv",
+                       long_options, &option_index);
+      if (c == (-1))
+        break;
+      switch (c)
+        {
+	case 'l':
+	  lflg = 1;
+	  break;
+        case 'h':
+          print_help();
+          return 0;
+        case 'v':
+          printf("error-codes (%s) %s\n", PACKAGE, VERSION);
+          return 0;
+        default:
+	  fprintf(stderr, "Unknown option: '-%c'\n", c);
+          print_error();
+          return EINVAL;
+        }
+    }
+
+  argc -= optind;
+  argv += optind;
+
+  if (lflg)
+    {
+      if (argc > 0)
+	{
+	  fprintf(stderr, "error-codes: too many arguments.\n");
+	  print_error();
+	  return EINVAL;
+	}
+
+      for (size_t i = 0; list[i].name != NULL; ++i)
+	print_entry(mode, &list[i]);
+    }
+  else if (argc > 0)
+    {
+      for (int i = 0; i < argc; ++i)
+	{
+	  const char *arg = argv[i];
+	  const struct entry *e = NULL;
+
+	  if (isdigit(arg[0]))
+	    e = entry_from_code(list, atoi(arg)); /* XXX strtol() */
+	  else
+	    e = entry_from_name(list, arg);
+
+	  if (e == NULL)
+	    printf("Not found: %s\n", arg);
+	  else
+	    print_entry(mode, e);
+        }
+    }
+  else
+    {
+      print_usage(stderr);
+      return EINVAL;
+    }
+
+  return 0;
+}
