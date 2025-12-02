@@ -93,4 +93,4 @@ executable('error-codes',
 #subdir('tests')
 
 # Manual pages
-#subdir('man')
+subdir('man')

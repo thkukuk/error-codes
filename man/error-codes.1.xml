@@ -1,0 +1,148 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="error-codes">
+  <refmeta>
+    <refentrytitle>error-codes</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="source">error-codes %version%</refmiscinfo>
+    <refmiscinfo class="manual">User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>error-codes</refname>
+    <refpurpose>lookup error codes and descriptions</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>error-codes</command>
+      <arg choice="req">name-or-code</arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>error-codes</command>
+      <arg choice="plain">COMMAND</arg>
+      <arg choice="opt">option</arg>
+      <arg choice="opt" rep="repeat">arguments</arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>error-codes</command>
+      <group choice="plain">
+	<arg choice="plain">--help</arg>
+	<arg choice="plain">--version</arg>
+      </group>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      This command can lookup error codes for <command>errno</command>,
+      <command>libeconf</command> and <command>pam</command> and display
+      the name of the error, the value and the description.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Commands</title>
+    <para>
+      The following commands are understood:
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term><command>econf</command></term>
+        <listitem>
+          <para>Lookup error codes for libeconf.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>errno</command></term>
+        <listitem>
+          <para>Lookup error codes for errno.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><command>pam</command></term>
+        <listitem>
+          <para>Lookup error codes for PAM.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Options</title>
+    <para>
+      Options for <command>econf</command>, <command>errno</command> and <command>pam</command>:
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term>
+          <option>name-or-code</option>
+        </term>
+        <listitem>
+          <para>Print information about error name or code.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <option>-l</option>, <option>--list</option>
+        </term>
+        <listitem>
+          <para>List all error names, values and descriptions.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <option>-s</option>, <option>--search</option> <replaceable>keyword...</replaceable>
+        </term>
+        <listitem>
+          <para>Search keywords in description.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <option>-S</option>, <option>--search-locales</option> <replaceable>keyword...</replaceable>
+        </term>
+        <listitem>
+          <para>Search keywords in all installed languages.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>
+      Generic options:
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term>
+          <option>-h</option>, <option>--help</option>
+        </term>
+        <listitem>
+          <para>Give this help list.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <option>-v</option>, <option>--version</option>
+        </term>
+        <listitem>
+          <para>Print program version.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>errno</refentrytitle><manvolnum>3</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>libeconf</refentrytitle><manvolnum>3</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pam</refentrytitle><manvolnum>3</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+
+</refentry>
