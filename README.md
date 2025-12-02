@@ -14,7 +14,7 @@ ECONF_NOKEY - 5 - Key not found
 ECONF_ARGUMENT_IS_NULL_VALUE - 22 - Given argument is NULL
 ```
 
-Additional it is possible to search for words in the error description.
+Additionally, it is possible to search for words in the error description.
 This can even be done for all locales.
 
 ```

@@ -40,7 +40,7 @@ print_usage(FILE *stream)
 static void
 print_help(void)
 {
-  fputs("error-codes - lookup error codes and descriptions.\n\n", stdout);
+  fputs("error-codes - lookup error codes and their description.\n\n", stdout);
   print_usage(stdout);
 
   fputs("Commands: econf, errno, pam\n\n", stdout);
