@@ -102,11 +102,33 @@ entry_from_code(const struct entry *list, int code)
   return NULL;
 }
 
+static bool
+matches(const char *desc, const char **words)
+{
+  for (size_t i = 0; words[i] != NULL; ++i)
+    {
+      if (strcasestr(desc, words[i]) == NULL)
+	return false;
+    }
+  return true;
+}
+
+static void
+search_words(int mode, const struct entry *list, const char **words)
+{
+  for (size_t i = 0; list[i].name != NULL; ++i)
+    {
+      if (matches(generic_strerror(mode, list[i].code), words))
+	print_entry(mode, &list[i]);
+    }
+}
+
 int
 main(int argc, char **argv)
 {
   const struct entry *list = NULL;
   int lflg = 0;
+  int sflg = 0;
   int mode = -1; /* 0 = econf, 1 = errno, 2 = pam, XXX make enum out of it */
 
   setlocale(LC_ALL, "");
@@ -150,14 +172,14 @@ main(int argc, char **argv)
       int option_index = 0;
       static struct option long_options[] =
         {
-	  {"list",    no_argument,       NULL, 'l' },
-	  {"search",  required_argument, NULL, 's' },
-          {"help",    no_argument,       NULL, 'h' },
-          {"version", no_argument,       NULL, 'v' },
-          {NULL,      0,                 NULL, '\0'}
+	  {"list",    no_argument, NULL, 'l' },
+	  {"search",  no_argument, NULL, 's' },
+          {"help",    no_argument, NULL, 'h' },
+          {"version", no_argument, NULL, 'v' },
+          {NULL,      0,           NULL, '\0'}
         };
 
-      c = getopt_long (argc, argv, "ls:hv",
+      c = getopt_long (argc, argv, "lshv",
                        long_options, &option_index);
       if (c == (-1))
         break;
@@ -165,6 +187,9 @@ main(int argc, char **argv)
         {
 	case 'l':
 	  lflg = 1;
+	  break;
+	case 's':
+	  sflg = 1;
 	  break;
         case 'h':
           print_help();
@@ -182,6 +207,12 @@ main(int argc, char **argv)
   argc -= optind;
   argv += optind;
 
+  if (lflg+sflg > 1)
+    {
+      print_usage(stderr);
+      return EINVAL;
+    }
+
   if (lflg)
     {
       if (argc > 0)
@@ -193,6 +224,17 @@ main(int argc, char **argv)
 
       for (size_t i = 0; list[i].name != NULL; ++i)
 	print_entry(mode, &list[i]);
+    }
+  else if (sflg)
+    {
+      /* check that there is at least one word to search for */
+      if (argc == 0)
+	{
+	  print_usage(stderr);
+	  return EINVAL;
+	}
+
+      search_words(mode, list, (const char **)argv);
     }
   else if (argc > 0)
     {
