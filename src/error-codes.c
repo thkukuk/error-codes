@@ -8,6 +8,13 @@
 #include <locale.h>
 #include <getopt.h>
 
+typedef enum {
+  NONE = -1,
+  ECONF,
+  ERRNO,
+  PAM
+} command_t;
+
 struct entry {
   const char *name;
   int code;
@@ -39,13 +46,14 @@ print_help(void)
   fputs("Commands: econf, errno, pam\n\n", stdout);
 
   fputs("Options for econf, errno and pam:\n", stdout);
-  fputs("  <name-or-code>            Print information about error name or code\n", stdout);
-  fputs("  -l, --list                List all error names, values and descriptions\n", stdout);
-  fputs("  -s, --search <keyword...> Search keywords in description\n", stdout);
+  fputs("  <name-or-code>                    Print information about error name or code\n", stdout);
+  fputs("  -l, --list                        List all error names, values and descriptions\n", stdout);
+  fputs("  -s, --search <keyword...>         Search keywords in description\n", stdout);
+  fputs("  -S, --search-locales <keyword...> Search keywords in all installed languages\n", stdout);
   fputs("\n", stdout);
   fputs("Generic options:\n", stdout);
-  fputs("  -h, --help                Give this help list\n", stdout);
-  fputs("  -v, --version             Print program version\n", stdout);
+  fputs("  -h, --help                        Give this help list\n", stdout);
+  fputs("  -v, --version                     Print program version\n", stdout);
 }
 
 static void
@@ -55,17 +63,17 @@ print_error(void)
 }
 
 static const char *
-generic_strerror(int mode, int code)
+generic_strerror(command_t mode, int code)
 {
   switch (mode)
     {
-    case 0:
+    case ECONF:
       return econf_errString((econf_err)code);
       break;
-    case 1:
+    case ERRNO:
       return strerror(code);
       break;
-    case 2:
+    case PAM:
       return pam_strerror(NULL, code);
       break;
     default:
@@ -76,7 +84,7 @@ generic_strerror(int mode, int code)
 }
 
 static void
-print_entry(int mode, const struct entry *e)
+print_entry(command_t mode, const struct entry *e)
 {
   printf("%s - %i - %s\n", e->name, e->code,
 	 generic_strerror(mode, e->code));
@@ -114,7 +122,7 @@ matches(const char *desc, const char **words)
 }
 
 static void
-search_words(int mode, const struct entry *list, const char **words)
+search_words(command_t mode, const struct entry *list, const char **words)
 {
   for (size_t i = 0; list[i].name != NULL; ++i)
     {
@@ -123,13 +131,54 @@ search_words(int mode, const struct entry *list, const char **words)
     }
 }
 
+static int
+search_words_locale(command_t mode, const struct entry *list, const char **words)
+{
+  FILE *fp;
+  char locale[100]; /* static buffers are bad, but no locale should have 100 characters */
+  int r;
+
+  fp = popen("locale -a", "r");
+  if (fp == NULL)
+    {
+      r = -errno;
+      fprintf(stderr, "ERROR: 'locale -a' failed: %s\n", strerror(-r));
+      return r;
+    }
+
+  while (fgets(locale, sizeof(locale), fp) != NULL)
+    {
+      size_t nl = strcspn(locale, "\n");
+
+      if (nl)
+	locale[nl] = '\0';
+
+      for (size_t i = 0; list[i].name != NULL; ++i)
+	{
+	  const char *oldlocale = setlocale(LC_ALL, locale);
+	  if (oldlocale == NULL)
+	    {
+	      printf("WARNING: locale '%s' does not work\n", locale);
+	      continue;
+	    }
+	  if (matches(generic_strerror(mode, list[i].code), words))
+	    print_entry(mode, &list[i]);
+	  setlocale(LC_ALL, oldlocale);
+	}
+    }
+  pclose(fp);
+
+  return 0;
+}
+
 int
 main(int argc, char **argv)
 {
   const struct entry *list = NULL;
   int lflg = 0;
   int sflg = 0;
-  int mode = -1; /* 0 = econf, 1 = errno, 2 = pam, XXX make enum out of it */
+  int Sflg = 0;
+  command_t mode = NONE;
 
   setlocale(LC_ALL, "");
 
@@ -141,17 +190,17 @@ main(int argc, char **argv)
 
   if (streq(argv[1], "econf"))
     {
-      mode = 0;
+      mode = ECONF;
       list = econf_data;
     }
   else if (streq(argv[1], "errno"))
     {
-      mode = 1;
+      mode = ERRNO;
       list = errno_data;
     }
   else if (streq(argv[1], "pam"))
     {
-      mode = 2;
+      mode = PAM;
       list = pam_data;
     }
   else if (argv[1][0] != '-')
@@ -160,7 +209,7 @@ main(int argc, char **argv)
       exit(EINVAL);
     }
 
-  if (mode >= 0)
+  if (mode != NONE)
     {
       --argc;
       ++argv;
@@ -172,14 +221,15 @@ main(int argc, char **argv)
       int option_index = 0;
       static struct option long_options[] =
         {
-	  {"list",    no_argument, NULL, 'l' },
-	  {"search",  no_argument, NULL, 's' },
-          {"help",    no_argument, NULL, 'h' },
-          {"version", no_argument, NULL, 'v' },
-          {NULL,      0,           NULL, '\0'}
+	  {"list",           no_argument, NULL, 'l' },
+	  {"search",         no_argument, NULL, 's' },
+	  {"search-locales", no_argument, NULL, 'S' },
+          {"help",           no_argument, NULL, 'h' },
+          {"version",        no_argument, NULL, 'v' },
+          {NULL,             0,           NULL, '\0'}
         };
 
-      c = getopt_long (argc, argv, "lshv",
+      c = getopt_long (argc, argv, "lsShv",
                        long_options, &option_index);
       if (c == (-1))
         break;
@@ -190,6 +240,9 @@ main(int argc, char **argv)
 	  break;
 	case 's':
 	  sflg = 1;
+	  break;
+	case 'S':
+	  Sflg = 1;
 	  break;
         case 'h':
           print_help();
@@ -207,7 +260,7 @@ main(int argc, char **argv)
   argc -= optind;
   argv += optind;
 
-  if (lflg+sflg > 1)
+  if (lflg+sflg+Sflg > 1)
     {
       print_usage(stderr);
       return EINVAL;
@@ -225,7 +278,7 @@ main(int argc, char **argv)
       for (size_t i = 0; list[i].name != NULL; ++i)
 	print_entry(mode, &list[i]);
     }
-  else if (sflg)
+  else if (sflg || Sflg)
     {
       /* check that there is at least one word to search for */
       if (argc == 0)
@@ -234,7 +287,10 @@ main(int argc, char **argv)
 	  return EINVAL;
 	}
 
-      search_words(mode, list, (const char **)argv);
+      if (sflg)
+	search_words(mode, list, (const char **)argv);
+      else
+	search_words_locale(mode, list, (const char **)argv);
     }
   else if (argc > 0)
     {
