@@ -1,8 +1,11 @@
 error-codes NEWS -- history of user-visible changes.
 
-Copyright (C) 2025 Thorsten Kukuk <kukuk@suse.com>.
+Copyright (C) 2025, 2026 Thorsten Kukuk <kukuk@suse.com>.
 
 Please enter bug reports at https://github.com/thkukuk/error-codes/issues
+
+Version 0.3.0
+* Fix minor bugs
 
 Version 0.2.0
 * First feature complete version
