@@ -260,7 +260,7 @@ main(int argc, char **argv)
   argc -= optind;
   argv += optind;
 
-  if (lflg+sflg+Sflg > 1)
+  if (mode == NONE || (lflg+sflg+Sflg > 1))
     {
       print_usage(stderr);
       return EINVAL;
