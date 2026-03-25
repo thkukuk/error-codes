@@ -52,11 +52,20 @@ bindir = get_option('bindir')
 
 configure_file(output: 'config.h', configuration: conf)
 
+libcurl = dependency('libcurl', required: true)
 libeconf = dependency('libeconf', required: true)
 libpam = dependency('pam', required: true)
 
 env = environment()
 env.set('CC', ' '.join(cc.cmd_array()))
+
+curl_data_h = custom_target(
+  'generate_curl_data_h',
+  output : 'curl_data.h',
+  input : 'scripts/gen_curl_data_h.sh',
+  command : [find_program('sh'), '@INPUT@', '@OUTPUT@'],
+  env : env
+)
 
 errno_data_h = custom_target(
   'generate_errno_data_h',
@@ -83,9 +92,9 @@ pam_data_h = custom_target(
 )
 
 executable('error-codes',
-           sources : ['src/error-codes.c', errno_data_h, econf_data_h, pam_data_h],
+           sources : ['src/error-codes.c', curl_data_h, errno_data_h, econf_data_h, pam_data_h],
            include_directories : inc,
-           dependencies : [libpam, libeconf],
+           dependencies : [libpam, libeconf, libcurl],
            install : true,
 	   install_dir : bindir)
 

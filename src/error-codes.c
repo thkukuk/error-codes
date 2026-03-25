@@ -10,6 +10,7 @@
 
 typedef enum {
   NONE = -1,
+  LIBCURL,
   ECONF,
   ERRNO,
   PAM
@@ -19,6 +20,9 @@ struct entry {
   const char *name;
   int code;
 };
+
+#include <curl/curl.h>
+#include "curl_data.h"
 
 #include <errno.h>
 #include "errno_data.h"
@@ -43,9 +47,9 @@ print_help(void)
   fputs("error-codes - lookup error codes and their description.\n\n", stdout);
   print_usage(stdout);
 
-  fputs("Commands: econf, errno, pam\n\n", stdout);
+  fputs("Commands: curl, econf, errno, pam\n\n", stdout);
 
-  fputs("Options for econf, errno and pam:\n", stdout);
+  fputs("Options for curl, econf, errno and pam:\n", stdout);
   fputs("  <name-or-code>                    Print information about error name or code\n", stdout);
   fputs("  -l, --list                        List all error names, values and descriptions\n", stdout);
   fputs("  -s, --search <keyword...>         Search keywords in description\n", stdout);
@@ -67,6 +71,9 @@ generic_strerror(command_t mode, int code)
 {
   switch (mode)
     {
+    case LIBCURL:
+      return curl_easy_strerror((CURLcode)code);
+      break;
     case ECONF:
       return econf_errString((econf_err)code);
       break;
@@ -187,8 +194,12 @@ main(int argc, char **argv)
       print_usage(stderr);
       exit(EINVAL);
     }
-
-  if (streq(argv[1], "econf"))
+  else if (streq(argv[1], "curl"))
+    {
+      mode = LIBCURL;
+      list = curl_data;
+    }
+  else if (streq(argv[1], "econf"))
     {
       mode = ECONF;
       list = econf_data;

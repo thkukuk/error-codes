@@ -36,8 +36,9 @@
     <title>Description</title>
     <para>
       This command can lookup error codes for <command>errno</command>,
-      <command>libeconf</command> and <command>pam</command> and display
-      the name of the error, the value and the description.
+      <command>libcurl</command>, <command>libeconf</command> and
+      <command>pam</command> and display the name of the error, the value
+      and the description.
     </para>
   </refsect1>
 
@@ -47,6 +48,12 @@
       The following commands are understood:
     </para>
     <variablelist>
+      <varlistentry>
+        <term><command>curl</command></term>
+        <listitem>
+          <para>Lookup error codes for libcurl.</para>
+        </listitem>
+      </varlistentry>
       <varlistentry>
         <term><command>econf</command></term>
         <listitem>
@@ -71,7 +78,7 @@
   <refsect1>
     <title>Options</title>
     <para>
-      Options for <command>econf</command>, <command>errno</command> and <command>pam</command>:
+      Options for <command>curl</command>, <command>econf</command>, <command>errno</command> and <command>pam</command>:
     </para>
     <variablelist>
       <varlistentry>
@@ -136,6 +143,9 @@
     <para>
       <citerefentry>
         <refentrytitle>errno</refentrytitle><manvolnum>3</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>libcurl-errors</refentrytitle><manvolnum>3</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>libeconf</refentrytitle><manvolnum>3</manvolnum>
