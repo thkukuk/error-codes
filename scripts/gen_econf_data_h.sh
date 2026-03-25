@@ -1,7 +1,7 @@
 #!/bin/sh
 
 CC=${CC:-cc}
-OUTPUT=${1:-errno_data.h}
+OUTPUT=${1:-econf_data.h}
 TESTPROG="dump-econf.c"
 
 cat << 'EOF' > "${OUTPUT}"
